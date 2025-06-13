@@ -5,6 +5,10 @@ import pandas as pd
 from datetime import datetime
 import io
 import os
+import warnings
+
+# Suppress sklearn warnings about feature names
+warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
 
 app = Flask(__name__)
 
