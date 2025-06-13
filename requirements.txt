@@ -4,3 +4,4 @@ gunicorn
 datetime
 scikit-learn
 openpyxl
+matplotlib
