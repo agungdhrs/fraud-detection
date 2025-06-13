@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, request, jsonify, render_template, send_file
 import pickle
 import pandas as pd
@@ -6,6 +5,10 @@ from datetime import datetime
 import io
 import os
 import warnings
+import matplotlib
+matplotlib.use('Agg')  # Set backend sebelum import pyplot
+import matplotlib.pyplot as plt
+import base64
 
 # Suppress sklearn warnings about feature names
 warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
@@ -69,9 +72,6 @@ def process_file(file):
                 
                 # Tambahkan hasil ke DataFrame
                 results.append({
-                    # 'row': index + 2,
-                    # 'trasactionID': row['TransactionID'],
-                    # 'customerID': row['CustomerID'],
                     'amount': row['Amount'],
                     'location': row['Location'],
                     'transaction_type': row['TransactionType'],
@@ -80,8 +80,8 @@ def process_file(file):
                 })
             except Exception as e:
                 results.append({
-                    'trasactionID': row['TransactionID'],
-                    'customerID': row['CustomerID'],
+                    'trasactionID': row.get('TransactionID', 'N/A'),
+                    'customerID': row.get('CustomerID', 'N/A'),
                     'error': f'Error pada baris {index + 2}: {str(e)}'
                 })
     
@@ -91,6 +91,113 @@ def process_file(file):
             os.remove(filename)
     
     return pd.DataFrame(results)
+
+def generate_plot(results_df):
+    try:
+        # Filter out rows with errors
+        valid_predictions = results_df[~results_df['prediction'].str.contains('Error', na=False)]
+        
+        if valid_predictions.empty:
+            return None, None, None
+            
+        # Extract prediction labels (FRAUD atau BUKAN FRAUD)
+        prediction_labels = []
+        for pred in valid_predictions['prediction']:
+            if 'FRAUD' in pred and 'BUKAN' not in pred:
+                prediction_labels.append('FRAUD')
+            else:
+                prediction_labels.append('BUKAN FRAUD')
+        
+        from collections import Counter
+        
+        # 1. PREDICTION DISTRIBUTION CHART
+        counts = Counter(prediction_labels)
+        
+        plt.figure(figsize=(8, 6))
+        ordered_data = []
+        ordered_colors = []
+        if 'BUKAN FRAUD' in counts:
+            ordered_data.append(('BUKAN FRAUD', counts['BUKAN FRAUD']))
+            ordered_colors.append('#28a745')
+        if 'FRAUD' in counts:
+            ordered_data.append(('FRAUD', counts['FRAUD']))
+            ordered_colors.append('#dc3545')
+        
+        prediction_chart = None
+        if ordered_data:
+            labels, sizes = zip(*ordered_data)
+            plt.pie(sizes, labels=labels, autopct='%1.1f%%', 
+                   startangle=90, colors=ordered_colors,
+                   textprops={'fontsize': 12})
+            plt.title('Distribusi Hasil Prediksi Fraud Detection', fontsize=14, pad=20)
+            plt.axis('equal')
+            
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', dpi=300, bbox_inches='tight', 
+                       facecolor='white', edgecolor='none')
+            buf.seek(0)
+            prediction_chart = base64.b64encode(buf.getvalue()).decode('utf-8')
+            buf.close()
+            plt.close()
+        
+        # 2. LOCATION DISTRIBUTION CHART
+        location_counts = Counter(valid_predictions['location'])
+        location_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']
+        
+        plt.figure(figsize=(8, 6))
+        if location_counts:
+            labels = list(location_counts.keys())
+            sizes = list(location_counts.values())
+            colors = location_colors[:len(labels)]
+            
+            plt.pie(sizes, labels=labels, autopct='%1.1f%%', 
+                   startangle=90, colors=colors,
+                   textprops={'fontsize': 12})
+            plt.title('Distribusi Transaksi Berdasarkan Lokasi', fontsize=14, pad=20)
+            plt.axis('equal')
+            
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', dpi=300, bbox_inches='tight', 
+                       facecolor='white', edgecolor='none')
+            buf.seek(0)
+            location_chart = base64.b64encode(buf.getvalue()).decode('utf-8')
+            buf.close()
+            plt.close()
+        else:
+            location_chart = None
+        
+        # 3. TRANSACTION TYPE DISTRIBUTION CHART
+        type_counts = Counter(valid_predictions['transaction_type'])
+        type_colors = ['#6C5CE7', '#A29BFE']
+        
+        plt.figure(figsize=(8, 6))
+        if type_counts:
+            labels = list(type_counts.keys())
+            sizes = list(type_counts.values())
+            colors = type_colors[:len(labels)]
+            
+            plt.pie(sizes, labels=labels, autopct='%1.1f%%', 
+                   startangle=90, colors=colors,
+                   textprops={'fontsize': 12})
+            plt.title('Distribusi Transaksi Berdasarkan Tipe', fontsize=14, pad=20)
+            plt.axis('equal')
+            
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', dpi=300, bbox_inches='tight', 
+                       facecolor='white', edgecolor='none')
+            buf.seek(0)
+            type_chart = base64.b64encode(buf.getvalue()).decode('utf-8')
+            buf.close()
+            plt.close()
+        else:
+            type_chart = None
+            
+        return prediction_chart, location_chart, type_chart
+            
+    except Exception as e:
+        print(f"Error generating plot: {str(e)}")
+        plt.close()
+        return None, None, None
 
 @app.route('/')
 def home():
@@ -129,18 +236,27 @@ def predict_batch():
         # Proses file
         results_df = process_file(file)
         
+        # Buat plot hasil (3 charts)
+        prediction_chart, location_chart, type_chart = generate_plot(results_df)
+
         # Convert hasil ke Excel
         output = io.BytesIO()
         results_df.to_excel(output, index=False)
         output.seek(0)
-        
-        return send_file(
-            output,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name='fraud_prediction_results.xlsx'
+
+        # Encode file untuk unduhan sementara (base64)
+        excel_base64 = base64.b64encode(output.getvalue()).decode('utf-8')
+
+        # Tampilkan di halaman
+        return render_template(
+            'result.html',
+            table=results_df.to_html(classes='table table-bordered', index=False),
+            chart_data=prediction_chart,
+            location_chart=location_chart,
+            type_chart=type_chart,
+            excel_data=excel_base64
         )
-    
+
     except Exception as e:
         return render_template('upload.html',
                              error=f'Error: {str(e)}',
