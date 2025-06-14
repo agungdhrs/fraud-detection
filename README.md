@@ -20,7 +20,7 @@ This project is a part of a final assignment / undergraduate thesis (Skripsi) fo
 
 ## Model Evaluation - Gradient Boosting
 
-![Gradient Boosting Evaluation](img/model_performance.png)
+![Gradient Boosting Evaluation](img/gradient boosting.png)
 
 ## 🗂️ Project Structure
 ```bash
