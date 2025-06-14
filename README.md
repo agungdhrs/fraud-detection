@@ -18,6 +18,10 @@ This project is a part of a final assignment / undergraduate thesis (Skripsi) fo
 - Input Features: amount, location, transactionType, Timestamp, isFraud
 - Trained model saved as `fraud.pkl`
 
+## Model Evaluation - Gradient Boosting
+
+![Gradient Boosting Evaluation](img/model_performance.png)
+
 ## 🗂️ Project Structure
 ```bash
 fraud-detection/
