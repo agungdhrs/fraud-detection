@@ -20,9 +20,10 @@ This project is a part of a final assignment / undergraduate thesis (Skripsi) fo
 
 ## Model Evaluation - Gradient Boosting
 
-![Gradient Boosting Evaluation](img/gradient boosting.png)
+![Gradient Boosting Evaluation](img/gradient_boosting.png)
 
 ## 🗂️ Project Structure
+
 ```bash
 fraud-detection/
 │
@@ -34,18 +35,24 @@ fraud-detection/
 ├── .gitignore # Files and folders to be ignored by Git
 └── README.md # Project documentation
 ```
+
 ## ⚙️ Installation
 
 # Clone the repository
+
 ```bash
 git clone https://github.com/agungdhrs/fraud-detection.git
 cd fraud-detection
 ```
+
 # Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
+
 # Run the app
+
 ```bash
 python app.py
 ```
