@@ -1,6 +1,6 @@
 # Fraud Detection
 
-🚨 A web-based machine learning project to detect fraudulent transactions using Python and Flask.
+🚨 A web-based machine learning project to detect fraudulent transactions using Python and Flask. 
 
 ## 📌 Project Overview
 
