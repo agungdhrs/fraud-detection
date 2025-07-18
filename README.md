@@ -1,6 +1,6 @@
 # Fraud Detection
 
-🚨 A web-based machine learning project to detect fraudulent transactions using Python and Flask. 
+🚨 A web-based machine learning project to detect fraudulent transactions using Python and Flask.
 
 ## 📌 Project Overview
 
@@ -17,24 +17,6 @@ This project is a part of a final assignment / undergraduate thesis (Skripsi) fo
 - Algorithm: Gradient Boosting
 - Input Features: amount, location, transactionType, Timestamp, isFraud
 - Trained model saved as `fraud.pkl`
-
-## ⚙️ Model Evaluation - Gradient Boosting
-
-![Gradient Boosting Evaluation](img/gradient_boosting.png)
-
-## 💻 Interface
-
-### Manual Detection View
-
-![Manual Detection](img/1.png)
-
-### Batch File Upload
-
-![Batch Upload](img/2.png)
-
-### Batch Detection Result View
-
-![Batch Detection Result](img/3.png)
 
 ## 🗂️ Project Structure
 
